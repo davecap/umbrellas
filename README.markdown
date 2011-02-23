@@ -24,7 +24,7 @@ All that is required is a config file in the following format:
         
         # For Distance
         reference = <MDAnalysis selection: reference residue> # Distance type only
-        components = x,y,z # Comma separated components for Distance type
+        components = xyz
         
         # Angle and Dihedral
         atoms = <list of atoms> # Comma separated. Required for Angle and Dihedral types

@@ -1,4 +1,5 @@
 import optparse
+from MDAnalysis.tests.datafiles import PDB_small
 
 import umbrellas
 
@@ -15,6 +16,8 @@ def main():
     e = umbrellas.Ensemble()
     print e.replicas()
     print e.reaction
+    
+    # add a few replicas with the PDB small
     
     
 if __name__=='__main__':
