@@ -3,7 +3,7 @@ class BaseReaction:
         A reaction can be a change of distance, angle, dihedral or any other property.
     """
     def __init__(self, config):
-        pass
+        self.config = config['reaction']
         
     def is_valid(self):
         raise NotImplementedError('Subclassess of BaseReaction must define a validation method.')
@@ -12,10 +12,22 @@ class BaseReaction:
         raise NotImplementedError('Subclassess of BaseReaction must define a coordinate calculation.')
             
 class Distance(BaseReaction):
-    pass
+    def is_valid(self):
+        return True
+        
+    def coordinate(self):
+        return 0.0
     
 class Angle(BaseReaction):
-    pass
+    def is_valid(self):
+        return True
+        
+    def coordinate(self):
+        return 0.0
 
 class Dihedral(BaseReaction):
-    pass
+    def is_valid(self):
+        return True
+        
+    def coordinate(self):
+        return 0.0

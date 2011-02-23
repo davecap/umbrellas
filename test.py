@@ -13,6 +13,8 @@ def main():
     (options, args) = parser.parse_args()
     
     e = umbrellas.Ensemble()
+    print e.replicas()
+    print e.reaction
     
     
 if __name__=='__main__':

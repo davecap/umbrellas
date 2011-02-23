@@ -5,24 +5,22 @@ from validate import Validator
 CONFIG_SPEC = """# Umbrellas Config File
 
 # Title for this ensemble
-title = My Ensemble
+title = string(default='My Ensemble')
 # Debug mode
 debug = boolean(default=False)
 
 [reaction]
     # Choose one type. Custom (subclassing support) types coming soon!
-    type = option('Distance', 'Angle', 'Dihedral')
+    type = option('Distance', 'Angle', 'Dihedral', default='Distance')
     # Target residue selection
     target = string(default='resname POT and resid 1')
-    
-    # Extra parameters
     
     # Distance reaction coordinate: reference residue selection
     reference = string(default='')
     # Distance components. Can be any combination of xyz (ie: x or xy, or z, etc...)
     components = string(default='xyz')
     
-    # Angle and Dihedral reaction coordinates, atom selections
+    # Angle and Dihedral reaction coordinates: atom selections
     atoms = string_list(min=0, default=list())
 
 """

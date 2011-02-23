@@ -3,10 +3,11 @@
 import os
 import logging
 logger = logging.getLogger('umbrellas')
-f = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-h = logging.StreamHandler()
-h.setFormatter(f)
-logger.addHandler(h)
+
+_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+_handler = logging.StreamHandler()
+_handler.setFormatter(_formatter)
+logger.addHandler(_handler)
 
 import MDAnalysis
 
@@ -16,11 +17,14 @@ from reaction import Distance, Angle, Dihedral
 class Ensemble:
     """ The Ensemble class contains and manages Replicas """
      
-    def __init__(self, config='config.ini', replicadb='replicas.db'):
-        """ Load the config file"""
-        if not os.path.exists(config):
+    def __init__(self, config_path='config.ini', replicadb_path='replicas.db'):
+        # Load the config file
+        if not os.path.exists(config_path):
             logger.warning('Config file %s not found so default will be created' % config)
-        self.config = setup_config(config, create=True)
+        self.config = setup_config(config_path, create=True)
+        
+        # Load the replica DB file
+        self.replicadb = setup_replicadb(replicadb_path, create=True)
         
         if self.config['debug']:
             logger.setLevel(logging.DEBUG)
@@ -29,21 +33,11 @@ class Ensemble:
             logger.setLevel(logging.WARNING)
         
         # Instantiate the Reaction class and validate it against the config
-        self.reaction = globals()[self.config['reaction']['type']]()
+        self.reaction = globals()[self.config['reaction']['type']](self.config)
         
-        # Load the replica DB file, assert that it exists
-        self.replicadb = setup_replicadb(replicadb, create=True)
-        self.load()
-        
-        print self.replicas
-        
-    def reaction(self):
-        """ Returns the current reaction type """
-        pass
-        
-    def load(self):
+    def replicas(self):
         """ Load the replica DB """
-        self.replicas = self.replicadb['replicas']
+        return self.replicadb['replicas']
         
     def save(self):
         """ Save the replica DB """
@@ -53,11 +47,11 @@ class Replica:
     """ The Replica class defines a single replica in a system.
     """
     
-    def __init__(self, config):
-        """ Load the config file"""
-        pass
+    def __init__(self, ensemble, config):
+        self.ensemble = ensemble
+        self.config = config
     
-    def load(self, structure, coordinates):
+    def load(self):
         """ Generate a MDanalysis Universe object"""
         pass
         
