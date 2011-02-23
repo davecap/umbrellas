@@ -53,6 +53,7 @@ class Replica:
     
     def load(self):
         """ Generate a MDanalysis Universe object"""
+        
         pass
         
     def save(self, filename):
