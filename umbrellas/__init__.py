@@ -1,5 +1,7 @@
 # Umbrellas
 
+__version__ = "1.0"
+
 import os
 import logging
 logger = logging.getLogger('umbrellas')
