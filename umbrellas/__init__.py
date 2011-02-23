@@ -19,14 +19,14 @@ from reaction import Distance, Angle, Dihedral
 class Ensemble:
     """ The Ensemble class contains and manages Replicas """
      
-    def __init__(self, config_path='config.ini', replicadb_path='replicas.db'):
+    def __init__(self, config_path='config.ini'):
         # Load the config file
         if not os.path.exists(config_path):
             logger.warning('Config file %s not found so default will be created' % config)
         self.config = setup_config(config_path, create=True)
         
-        # Load the replica DB file
-        self.replicadb = setup_replicadb(replicadb_path, create=True)
+        # Load the replica DB file (path from config)
+        self.replicadb = setup_replicadb(self._replicadb(), create=True)
         
         if self.config['debug']:
             logger.setLevel(logging.DEBUG)
@@ -36,10 +36,38 @@ class Ensemble:
         
         # Instantiate the Reaction class and validate it against the config
         self.reaction = globals()[self.config['reaction']['type']](self.config)
-        
+    
+    def _basedir(self):
+        return os.path.dirname(self.config.filename)
+    
+    def _replicadb(self):
+        return os.path.join(self._basedir(), self.config['replicadb'])
+    
     def replicas(self):
         """ Load the replica DB """
         return self.replicadb['replicas']
+        
+    def add_replica(self, name, **kwargs):
+        # if not name:
+        #     name = self._generate_name()
+        r = Replica(self, name, **kwargs)
+        replicas = self.replicas()
+        
+        if name in replicas:
+            logging.error('Cannot create replica with name %s, already taken!' % name)
+            return None
+        
+        replicas[name] = kwargs
+        self.save()
+        return r
+        
+    def get_replica(self, name):
+        replicas = self.replicas()
+        if name in replicas:
+            return Replica(self, name, **replicas[name])
+        else:
+            logging.error('Replica with name %s not found!' % name)
+            return None
         
     def save(self):
         """ Save the replica DB """
@@ -49,9 +77,10 @@ class Replica:
     """ The Replica class defines a single replica in a system.
     """
     
-    def __init__(self, ensemble, config):
+    def __init__(self, ensemble, name, **kwargs):
         self.ensemble = ensemble
-        self.config = config
+        self.name = name
+        self.parameters = kwargs
     
     def load(self):
         """ Generate a MDanalysis Universe object"""

@@ -6,6 +6,8 @@ CONFIG_SPEC = """# Umbrellas Config File
 
 # Title for this ensemble
 title = string(default='My Ensemble')
+# Path to replicas DB file, relative to this config file
+replicadb = string(default='replicas.db')
 # Debug mode
 debug = boolean(default=False)
 
