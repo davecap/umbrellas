@@ -1,4 +1,6 @@
+import MDAnalysis
 from MDAnalysis.tests.datafiles import PDB_small
+
 import os
 
 import umbrellas
@@ -27,7 +29,9 @@ def test_add_replica(tmpdir):
 
 [replicas]
     [[testpdb]]
-        path = /Library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/site-packages/MDAnalysis-0.7.2_devel-py2.6-macosx-10.3-fat.egg/MDAnalysis/tests/data/adk_open.pdb
+        path = %s
 
-"""
+""" % PDB_small
+
+
 
