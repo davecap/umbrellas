@@ -59,6 +59,9 @@ def test_replica_coordinates_load(tmpdir):
     r = e.get_replica('trl0')
     r_u = r.load()
     assert str(r_u) == str(u)
+    assert u.filename == r.u_coordinates()
+    assert PDB_small == r.u_coordinates()
+    assert r.u_structure() == None
 
 def test_replica_coordinates_structure_load(tmpdir):
     cpath = tmpdir.join('config.ini')
@@ -72,3 +75,8 @@ def test_replica_coordinates_structure_load(tmpdir):
     r = e.get_replica('trl0')
     r_u = r.load()
     assert str(r_u) == str(u)
+    assert u.trajectory.filename == r.u_coordinates()
+    assert DCD == r.u_coordinates()
+    assert u.filename == r.u_structure()
+    assert PSF == r.u_structure()
+

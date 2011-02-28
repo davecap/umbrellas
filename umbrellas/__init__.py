@@ -84,9 +84,7 @@ class Replica:
         self.name = name
         self.universe = None
         self._parameters = kwargs
-        if not self.coordinates() or not os.path.exists(self.coordinates()):
-            raise Exception('No coordinates path set for replica %s. Make sure each replica has a valid %s parameter.' % (self.name, Replica.COORDINATES_PATH_KEY))
-    
+        
     def structure(self):
         """ OPTIONAL Path to the structure file (PSF). """
         return self.parameter(Replica.STRUCTURE_PATH_KEY)
@@ -94,6 +92,26 @@ class Replica:
     def coordinates(self):
         """ REQUIRED Path to the coordinates file (PDB, DCD, CRD). """
         return self.parameter(Replica.COORDINATES_PATH_KEY)
+    
+    def u_structure(self):
+        # self.universe.filename
+        # OR
+        # None if structure not set
+        if not self.universe or not self.structure():
+            return None
+        else:
+            return self.universe.filename
+    
+    def u_coordinates(self):
+        # self.universe.filename IF STRUCTURE (topology) IS NOT SET
+        # OR
+        # self.universe.trajectory.filename IF STRUCTURE IS SET
+        if not self.universe:
+            return None
+        if self.structure():
+            return self.universe.trajectory.filename
+        else:
+            return self.universe.filename
     
     def parameter(self, k):
         if k in self._parameters:
@@ -114,15 +132,17 @@ class Replica:
             self.universe = MDAnalysis.Universe(self.structure(), self.coordinates())
         else:
             # fallback to coordinate only
-            self.universe = MDAnalysis.Universe(self.coordinates())    
+            self.universe = MDAnalysis.Universe(self.coordinates())
         return self.universe
         
-    def save(self, filename):
-        """ Save the coordinates, optionally run through VMD"""
-        pass
+    def save(self, overwrite=False):
+        """ Save the coordinates to a new file (and save the new file name).
+            This function will overwrite the current coordinates file if overwite is True """
+        self.ensemble.save()
      
     def coordinate(self):
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""
+        self.load()
         pass
     
     def generate(self, step=1.0):
