@@ -82,7 +82,7 @@ class Replica:
     def __init__(self, ensemble, name, **kwargs):
         self.ensemble = ensemble
         self.name = name
-        self.universe = None
+        self._universe = None
         self._parameters = kwargs
         
     def structure(self):
@@ -97,21 +97,21 @@ class Replica:
         # self.universe.filename
         # OR
         # None if structure not set
-        if not self.universe or not self.structure():
+        if not self._universe or not self.structure():
             return None
         else:
-            return self.universe.filename
+            return self._universe.filename
     
     def u_coordinates(self):
         # self.universe.filename IF STRUCTURE (topology) IS NOT SET
         # OR
         # self.universe.trajectory.filename IF STRUCTURE IS SET
-        if not self.universe:
+        if not self._universe:
             return None
         if self.structure():
-            return self.universe.trajectory.filename
+            return self._universe.trajectory.filename
         else:
-            return self.universe.filename
+            return self._universe.filename
     
     def parameter(self, k):
         if k in self._parameters:
@@ -119,8 +119,12 @@ class Replica:
         else:
             return None
     
-    def load(self):
+    def universe(self):
         """ Generate a MDanalysis Universe object"""
+        # check to make sure we haven't already loaded the universe
+        if self._universe and self.u_structure() == self.structure() and self.u_coordinates() == self.coordinates():
+            return self._universe
+        
         if not os.path.exists(self.coordinates()):
             raise Exception ('Coordinates path for replica %s not found: %s' % (self.name, self.coordinates()))
         
@@ -129,11 +133,11 @@ class Replica:
         
         if self.structure() and self.coordinates():
             # first see if we have both structure and coordinate files
-            self.universe = MDAnalysis.Universe(self.structure(), self.coordinates())
+            self._universe = MDAnalysis.Universe(self.structure(), self.coordinates())
         else:
             # fallback to coordinate only
-            self.universe = MDAnalysis.Universe(self.coordinates())
-        return self.universe
+            self._universe = MDAnalysis.Universe(self.coordinates())
+        return self._universe
         
     def save(self, overwrite=False):
         """ Save the coordinates to a new file (and save the new file name).
@@ -142,8 +146,7 @@ class Replica:
      
     def coordinate(self):
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""
-        self.load()
-        pass
+        return self.ensemble.reaction.coordinate(self.universe())
     
     def generate(self, step=1.0):
         """ Generate another replica from self with the given step size.

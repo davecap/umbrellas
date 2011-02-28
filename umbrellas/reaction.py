@@ -25,11 +25,11 @@ class Distance(BaseReaction):
         
     def coordinate(self, universe):
         """ Somehow, the MDAnalysis Universe must be passed here so we can extract the coordinate """
-        target = universe.SelectAtoms(self.config['target']).centerOfMass()
-        reference = universe.SelectAtoms(self.config['reference']).centerOfMass()
+        target = universe.selectAtoms(self.config['target']).centerOfMass()
+        reference = universe.selectAtoms(self.config['reference']).centerOfMass()
         
-        t = (0.0,0.0,0.0)
-        r = (0.0,0.0,0.0)
+        t = [0.0,0.0,0.0]
+        r = [0.0,0.0,0.0]
         total = 0
         
         if 'x' in self.config['components']:

@@ -57,7 +57,7 @@ def test_replica_coordinates_load(tmpdir):
     
     e.add_replica(name='trl0', coordinates=PDB_small)
     r = e.get_replica('trl0')
-    r_u = r.load()
+    r_u = r.universe()
     assert str(r_u) == str(u)
     assert u.filename == r.u_coordinates()
     assert PDB_small == r.u_coordinates()
@@ -73,10 +73,67 @@ def test_replica_coordinates_structure_load(tmpdir):
 
     e.add_replica(name='trl0', coordinates=DCD, structure=PSF)
     r = e.get_replica('trl0')
-    r_u = r.load()
+    r_u = r.universe()
     assert str(r_u) == str(u)
     assert u.trajectory.filename == r.u_coordinates()
     assert DCD == r.u_coordinates()
     assert u.filename == r.u_structure()
     assert PSF == r.u_structure()
+    assert r_u == r.universe()
 
+def test_replica_coordinate_xyz(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
+    
+    test_spec = """# Umbrellas Config File
+title = Test Ensemble
+replicadb = replicas.db
+debug = False
+
+[reaction]
+    type = Distance
+    # ATOM      1 N    MET     1     -11.921  26.307  10.410  1.00 38.38      4AKE
+    target = resid 1 and name N
+    # ATOM    614 N    SER    41     -14.463   4.877  -5.889  1.00 75.64      4AKE
+    reference = resid 41 and name N
+    components = xyz
+
+"""
+    # set up the config file
+    cpath.write(test_spec)
+    e = umbrellas.Ensemble(config_path=str(cpath))
+    e.add_replica(name='trc0', coordinates=PDB_small)
+    r = e.get_replica('trc0')
+    u = r.universe()
+    assert u
+    # 27.04477972
+    assert "%.3f" % r.coordinate() == "27.044"
+    
+
+def test_replica_coordinate_z(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
+
+    test_spec = """# Umbrellas Config File
+title = Test Ensemble
+replicadb = replicas.db
+debug = False
+
+[reaction]
+    type = Distance
+    # ATOM      1 N    MET     1     -11.921  26.307  10.410  1.00 38.38      4AKE
+    target = resid 1 and name N
+    # ATOM    614 N    SER    41     -14.463   4.877  -5.889  1.00 75.64      4AKE
+    reference = resid 41 and name N 
+    components = z
+
+"""
+    # set up the config file
+    cpath.write(test_spec)
+    e = umbrellas.Ensemble(config_path=str(cpath))
+    e.add_replica(name='trc0', coordinates=PDB_small)
+    r = e.get_replica('trc0')
+    u = r.universe()
+    assert u
+    # 16.299
+    assert "%.3f" % r.coordinate() == "16.299"
