@@ -149,8 +149,86 @@ def test_replica_save(tmpdir):
     u = r.universe()
     assert u
 
-    pdbpath = tmpdir.join('trc0.pdb')
-    print pdbpath
-    r.save(path=pdbpath, overwrite=True)
-    assert r.coordinates() == pdbpath
-    assert os.path.exists(pdbpath)
+    pdbpath = tmpdir.join('trc0.pdb')    
+    r.save(path=str(pdbpath))
+    assert r.coordinates() == str(pdbpath)
+    assert os.path.exists(str(pdbpath))
+    
+    e.add_replica(name='trc1', coordinates=str(pdbpath))
+    r1 = e.get_replica('trc1')
+    assert r.coordinates() == r1.coordinates()
+    assert str(r.universe()) == str(r1.universe())
+
+def test_replica_mutate_xyz(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
+
+    test_spec = """# Umbrellas Config File
+title = Test Ensemble
+replicadb = replicas.db
+debug = False
+
+[reaction]
+    type = Distance
+    # ATOM      1 N    MET     1     -11.921  26.307  10.410  1.00 38.38      4AKE
+    target = resid 1 and name N
+    # ATOM    614 N    SER    41     -14.463   4.877  -5.889  1.00 75.64      4AKE
+    reference = resid 41 and name N
+    components = xyz
+
+"""
+    # set up the config file
+    cpath.write(test_spec)
+    e = umbrellas.Ensemble(config_path=str(cpath))
+    e.add_replica(name='trm0', coordinates=PDB_small)
+    r = e.get_replica('trm0')
+    u = r.universe()
+    # 27.04477972
+    assert "%.3f" % r.coordinate() == "27.044"
+    
+    pdbpath_orig = tmpdir.join('trm0_xyz_orig.pdb')
+    r.save(path=str(pdbpath_orig))
+    
+    r.mutate(step=1.0)
+    pdbpath = tmpdir.join('trm0_xyz_mutated.pdb')    
+    r.save(path=str(pdbpath))
+    
+    assert "%.3f" % r.coordinate() == "26.044"
+  
+def test_replica_mutate_z(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
+
+    test_spec = """# Umbrellas Config File
+title = Test Ensemble
+replicadb = replicas.db
+debug = False
+
+[reaction]
+    type = Distance
+    # ATOM      1 N    MET     1     -11.921  26.307  10.410  1.00 38.38      4AKE
+    target = resid 1 and name N
+    # ATOM    614 N    SER    41     -14.463   4.877  -5.889  1.00 75.64      4AKE
+    reference = resid 41 and name N 
+    components = z
+
+"""
+    # set up the config file
+    cpath.write(test_spec)
+    e = umbrellas.Ensemble(config_path=str(cpath))
+    e.add_replica(name='trm0', coordinates=PDB_small)
+    r = e.get_replica('trm0')
+    u = r.universe()
+    # 16.299
+    assert "%.3f" % r.coordinate() == "16.299"
+    
+    pdbpath_orig = tmpdir.join('trm0_z_orig.pdb')
+    r.save(path=str(pdbpath_orig))
+    
+    r.mutate(step=1.0)
+    pdbpath = tmpdir.join('trm0_z_mutated.pdb')    
+    r.save(path=str(pdbpath))
+    
+    assert "%.3f" % r.coordinate() == "15.299"
+    
+        
