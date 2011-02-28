@@ -10,7 +10,7 @@ _handler.setFormatter(_formatter)
 logger.addHandler(_handler)
 
 from config import setup_config, setup_replicadb
-from reaction import Distance, Angle, Dihedral
+from reaction import *
 
 class Ensemble:
     """ The Ensemble class contains and manages Replicas """
@@ -21,14 +21,15 @@ class Ensemble:
             logger.warning('Config file %s not found so default will be created' % config_path)
         self.config = setup_config(config_path, create=True)
         
-        # Load the replica DB file (path from config)
-        self.replicadb = setup_replicadb(self._replicadb(), create=True)
-        
         if self.config['debug']:
             logger.setLevel(logging.DEBUG)
             logger.debug('Debug mode is on!')
         else:
             logger.setLevel(logging.WARNING)
+            
+        # Load the replica DB file (path from config)
+        self.replicadb = setup_replicadb(self._replicadb_path(), create=True)
+        self.load()
         
         # Instantiate the Reaction class and validate it against the config
         # TODO: improve this!
@@ -37,35 +38,32 @@ class Ensemble:
     def _basedir(self):
         return os.path.dirname(self.config.filename)
     
-    def _replicadb(self):
+    def _replicadb_path(self):
         return os.path.join(self._basedir(), self.config['replicadb'])
-    
-    def replicas(self):
-        """ Load the replica DB """
-        return self.replicadb['replicas']
         
     def add_replica(self, name, **kwargs):
-        # if not name:
-        #     name = self._generate_name()
-        replicas = self.replicas()
-        if name in replicas:
-            logging.error('Cannot create replica with name %s, already taken!' % name)
-            return None
+        if name in self.replicas:
+            raise Exception('Cannot create replica with name %s, already taken!' % name)
         r = Replica(self, name, **kwargs)
-        replicas[name] = r.parameters
-        self.save()
+        self.replicas[name] = r
         return r
         
     def get_replica(self, name):
-        replicas = self.replicas()
-        if name in replicas:
-            return Replica(self, name, **replicas[name])
+        if name in self.replicas:
+            return self.replicas[name]
         else:
-            logging.error('Replica with name %s not found!' % name)
-            return None
-        
+            raise Exception('Replica with name %s not found!' % name)
+    
+    def load(self):
+        """ Load the replica DB """
+        self.replicas = {}
+        for name in self.replicadb['replicas']:
+            self.replicas[name] = Replica(self, name, **self.replicadb['replicas'][name])
+                
     def save(self):
         """ Save the replica DB """
+        for name,r in self.replicas.items():
+            self.replicadb['replicas'][name] = r.parameters
         self.replicadb.write()
 
 class Replica:
@@ -76,7 +74,7 @@ class Replica:
     COORDINATE_KEY = 'coordinate'
     FORCE_KEY = 'force'
     
-    DEFAULTS = { FORCE_KEY: 0.0, COORDINATE_KEY: '', COORDINATES_PATH_KEY: '' }
+    DEFAULTS = { FORCE_KEY: 0.0, COORDINATES_PATH_KEY: '' }
     
     def __init__(self, ensemble, name, **kwargs):
         self.ensemble = ensemble # Ensemble object reference
@@ -84,11 +82,14 @@ class Replica:
         self._universe = None # local MDAnalysis Universe object, see self.universe()
         self.parameters = Replica.DEFAULTS.copy() # copy a set of defaults first
         
-        if not self.parameter(Replica.COORDINATES_PATH_KEY):
-            logging.warning('No coordinate path for replica %s' % self.name)
-        
         self.parameters.update(kwargs)
         
+        if not self.parameter(Replica.COORDINATES_PATH_KEY):
+            raise Exception('No coordinate path for replica %s' % self.name)
+            
+        if not self.parameter(Replica.COORDINATE_KEY):
+            logging.warning('No coordinate for replica %s, calculating now...' % self.name)
+            self.coordinate()
         
     def structure(self):
         """ OPTIONAL Path to the structure file (PSF). """
@@ -166,17 +167,12 @@ class Replica:
         
         # set the new file as this coordinates file
         self.parameters[Replica.COORDINATES_PATH_KEY] = path
-        # reset the coordinate
-        
-        # save the ensemble
-        self.ensemble.save()
      
     def coordinate(self):
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""
         if not self.parameter(Replica.COORDINATE_KEY):
             # save this value to the replicas.db
             self.parameters[Replica.COORDINATE_KEY] = self.ensemble.reaction.coordinate(self.universe())
-            self.ensemble.save()
         return self.parameter(Replica.COORDINATE_KEY)
     
     def mutate(self, step=1.0):
