@@ -4,6 +4,7 @@ __version__ = "1.0"
 
 import os
 import logging
+import time
 logger = logging.getLogger('umbrellas')
 
 _formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
@@ -139,18 +140,48 @@ class Replica:
             self._universe = MDAnalysis.Universe(self.coordinates())
         return self._universe
         
-    def save(self, overwrite=False):
+    def save(self, path=None, overwrite=False):
         """ Save the coordinates to a new file (and save the new file name).
             This function will overwrite the current coordinates file if overwite is True """
+        # if no path is specified, use the current path
+        if path is None:
+            # just overwrite the current path
+            path = self.coordinates()
+        
+        # write to a new file in the same dir as path, dont overwrite path
+        if not overwrite:
+            basename, ext = os.path.splitext(path)
+            # get time in seconds as a string
+            t = str(time.time()).split('.')[0]
+            path = os.path.join(os.path.dirname(path, basename+'_'+t+ext))
+            if os.path.exists(path):
+                # this shouldn't really ever happen...
+                # TODO: figure out how to generate a filename that doesn't exist
+                logging.error('Generated file name already exists (%s). Will not overwrite so try again.' % path)
+                return False
+            
+        # write the universe
+        # NOTE: trajectories not supported yet
+        w = MDAnalysis.Writer(path)
+        w.write(self.universe())
+        
+        # set the new file as this coordinates file
+        self._parameters[Replica.COORDINATES_PATH_KEY] = path
+        
+        # save the ensemble
         self.ensemble.save()
+        return True
      
     def coordinate(self):
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""
         return self.ensemble.reaction.coordinate(self.universe())
     
-    def generate(self, step=1.0):
-        """ Generate another replica from self with the given step size.
+    def mutate(self, step=1.0):
+        """ Mutate this replica's coordinate by step units.
             The proper step size depends on the current reaction type in use.
         """
-        pass
-
+        self.ensemble.reaction.mutate(self.universe(), step)
+        
+        # reset the universe
+        self._universe = None
+        self.save()

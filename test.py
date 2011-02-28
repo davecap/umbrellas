@@ -137,3 +137,20 @@ debug = False
     assert u
     # 16.299
     assert "%.3f" % r.coordinate() == "16.299"
+    
+def test_replica_save(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
+    
+    e = umbrellas.Ensemble(config_path=str(cpath))
+    e.add_replica(name='trc0', coordinates=PDB_small)
+    
+    r = e.get_replica('trc0')
+    u = r.universe()
+    assert u
+
+    pdbpath = tmpdir.join('trc0.pdb')
+    print pdbpath
+    r.save(path=pdbpath, overwrite=True)
+    assert r.coordinates() == pdbpath
+    assert os.path.exists(pdbpath)

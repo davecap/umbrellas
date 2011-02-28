@@ -22,9 +22,13 @@ class Distance(BaseReaction):
             raise Exception('No reference specified in reaction config')
         if not ('x' in self.config['components'] or 'y' in self.config['components'] or 'z' in self.config['components']):
             raise Exception('Invalid distance components specified in reaction config, must be a combination of xyz')
-        
+    
+    def mutate(self, universe, step):
+        """ Change the coordinate in the universe by the given step size, along the vector between target and reference """
+        pass
+    
     def coordinate(self, universe):
-        """ Somehow, the MDAnalysis Universe must be passed here so we can extract the coordinate """
+        """ Obtain the coordinate from the MDAnalysis Universe object """
         target = universe.selectAtoms(self.config['target']).centerOfMass()
         reference = universe.selectAtoms(self.config['reference']).centerOfMass()
         
