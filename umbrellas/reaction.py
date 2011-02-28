@@ -9,9 +9,12 @@ class BaseReaction:
         
     def validate(self):
         raise NotImplementedError('Subclassess of BaseReaction must define a validation method.')
-        
+    
+    def mutate(self, universe, step):
+        raise NotImplementedError('Subclassess of BaseReaction must define the mutation operation.')
+    
     def coordinate(self, universe):
-        raise NotImplementedError('Subclassess of BaseReaction must define a coordinate calculation.')
+        raise NotImplementedError('Subclassess of BaseReaction must define the coordinate calculation.')
             
 class Distance(BaseReaction):
     """ Distance reactions require 2 parameters:
@@ -74,25 +77,16 @@ class Distance(BaseReaction):
         reference_com = universe.selectAtoms(self.config['reference']).centerOfMass()
         
         t,r,n = self._components(target_com, reference_com)
-        distance = numpy.linalg.norm(t-r)
-        #distance = ((t[0]-r[0])**2 + (t[1]-r[1])**2 + (t[2]-r[2])**2)**(0.5)
+        if n == 1:
+            # if we are in 1D, return the vector sum
+            return (r-t).sum()
+        else:
+            return numpy.linalg.norm(r-t)
         
-         # if we are in 1D and the target is < than the reference, make the distance negative
-        # TODO: make this optional
-        if n == 1 and list(t) < list(r):
-            distance = distance*-1.000
-        return distance
     
 class Angle(BaseReaction):
-    def validate(self):
-        return True
-        
-    def coordinate(self, universe):
-        return 0.0
+    pass
 
 class Dihedral(BaseReaction):
-    def validate(self):
-        return True
-        
-    def coordinate(self, universe):
-        return 0.0
+    pass
+

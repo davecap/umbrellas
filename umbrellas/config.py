@@ -33,9 +33,8 @@ REPLICA_DB_SPEC = """# Replica DB
 [replicas]
     [[__many__]]
         coordinates = string(default='')
-        k = float()
+        force = float()
         coordinate = float()
-        enabled = boolean(default=True)
 
 """
 
