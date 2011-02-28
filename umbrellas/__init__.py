@@ -76,25 +76,50 @@ class Ensemble:
 class Replica:
     """ The Replica class defines a single replica in a system.
     """
+    STRUCTURE_PATH_KEY = 'structure'
+    COORDINATES_PATH_KEY = 'coordinates'
     
     def __init__(self, ensemble, name, **kwargs):
         self.ensemble = ensemble
         self.name = name
-        self.parameters = kwargs
+        self.universe = None
+        self._parameters = kwargs
+        if not self.coordinates() or not os.path.exists(self.coordinates()):
+            raise Exception('No coordinates path set for replica %s. Make sure each replica has a valid %s parameter.' % (self.name, Replica.COORDINATES_PATH_KEY))
+    
+    def structure(self):
+        """ OPTIONAL Path to the structure file (PSF). """
+        return self.parameter(Replica.STRUCTURE_PATH_KEY)
+        
+    def coordinates(self):
+        """ REQUIRED Path to the coordinates file (PDB, DCD, CRD). """
+        return self.parameter(Replica.COORDINATES_PATH_KEY)
+    
+    def parameter(self, k):
+        if k in self._parameters:
+            return self._parameters[k]
+        else:
+            return None
     
     def load(self):
         """ Generate a MDanalysis Universe object"""
+        if not os.path.exists(self.coordinates()):
+            raise Exception ('Coordinates path for replica %s not found: %s' % (self.name, self.coordinates()))
         
-        pass
+        if self.structure() and not os.path.exists(self.structure()):
+            raise Exception ('Structure path for replica %s not found: %s' % (self.name, self.structure()))
+        
+        if self.structure() and self.coordinates():
+            # first see if we have both structure and coordinate files
+            self.universe = MDAnalysis.Universe(self.structure(), self.coordinates())
+        else:
+            # fallback to coordinate only
+            self.universe = MDAnalysis.Universe(self.coordinates())    
+        return self.universe
         
     def save(self, filename):
         """ Save the coordinates, optionally run through VMD"""
         pass
-    
-    def properties(self, properties={}):
-        """ Properties are a key/value set of extra properties that a replica may have.
-            They are simply written to the config file on save.
-        """
      
     def coordinate(self):
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""

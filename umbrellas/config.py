@@ -32,7 +32,7 @@ REPLICA_DB_SPEC = """# Replica DB
 
 [replicas]
     [[__many__]]
-        path = string(default='')
+        coordinates = string(default='')
         k = float()
         coordinate = float()
         enabled = boolean(default=True)

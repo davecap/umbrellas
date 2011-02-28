@@ -1,5 +1,5 @@
 import MDAnalysis
-from MDAnalysis.tests.datafiles import PDB_small
+from MDAnalysis.tests.datafiles import PDB_small, PDB, PSF, DCD, GRO, XTC
 
 import os
 
@@ -15,13 +15,13 @@ def test_new_ensemble(tmpdir):
     assert os.path.exists(str(cpath))
     assert os.path.exists(str(rpath))
     
-def test_add_replica(tmpdir):
+def test_add_replica_to_db(tmpdir):
     cpath = tmpdir.join('config.ini')
     rpath = tmpdir.join('replicas.db')
 
     e = umbrellas.Ensemble(config_path=str(cpath))
     
-    e.add_replica(name='testpdb', path=PDB_small)
+    e.add_replica(name='testpdb', coordinates=PDB_small)
     r = e.get_replica('testpdb')
     assert r
     assert rpath.read() == """# Replica DB
@@ -29,9 +29,46 @@ def test_add_replica(tmpdir):
 
 [replicas]
     [[testpdb]]
-        path = %s
+        coordinates = %s
 
 """ % PDB_small
 
+def test_replica_parameters(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
 
+    e = umbrellas.Ensemble(config_path=str(cpath))
+    
+    e.add_replica(name='trp0', coordinates=PDB_small, intparam=1, strparam="teststring")
+    r = e.get_replica('trp0')    
+    assert r._parameters == { 'coordinates': PDB_small, 'intparam':1, 'strparam':"teststring" }
+    
+    e.add_replica(name='trp1', coordinates=PDB_small, intparam=2, strparam="newstring", specialparam="special")
+    r = e.get_replica('trp1')
+    assert r._parameters == { 'coordinates':PDB_small, 'intparam':2, 'strparam':"newstring", 'specialparam':"special" }
 
+def test_replica_coordinates_load(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
+
+    e = umbrellas.Ensemble(config_path=str(cpath))
+    
+    u = MDAnalysis.Universe(PDB_small)
+    
+    e.add_replica(name='trl0', coordinates=PDB_small)
+    r = e.get_replica('trl0')
+    r_u = r.load()
+    assert str(r_u) == str(u)
+
+def test_replica_coordinates_structure_load(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
+
+    e = umbrellas.Ensemble(config_path=str(cpath))
+
+    u = MDAnalysis.Universe(PSF,DCD)
+
+    e.add_replica(name='trl0', coordinates=DCD, structure=PSF)
+    r = e.get_replica('trl0')
+    r_u = r.load()
+    assert str(r_u) == str(u)
