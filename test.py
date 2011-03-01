@@ -70,7 +70,7 @@ def test_replica_export(tmpdir):
 
     e = umbrellas.Ensemble(config_path=str(cpath))
     e.add_replica(name='test0', coordinates=PDB_small, force=0.0)
-    expected_export = {'coordinate': 27.04374297613483, 'coordinates': PDB_small, 'force': 0.0, 'name': 'test0'}
+    expected_export = { 'name': 'test0', 'parameters': {'coordinate': 27.04374297613483, 'coordinates': PDB_small, 'force': 0.0} }
     assert e.get_replica('test0').export() == expected_export
     
     assert [ r.export() for r in e.get_replicas() ] == [expected_export]

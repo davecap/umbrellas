@@ -105,9 +105,7 @@ class Replica:
     
     def export(self):
         """ Export all parameters including name. """
-        params = self.parameters.copy()
-        params.update({'name':self.name})
-        return params
+        return { 'name': self.name, 'parameters': self.parameters }
     
     def topology(self):
         """ OPTIONAL Path to the topology file (PSF). """
