@@ -176,9 +176,9 @@ class Replica:
         # set the new file as this coordinates file
         self.parameters[Replica.COORDINATES_PATH] = path
      
-    def coordinate(self):
+    def coordinate(self, force=False):
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""
-        if not self.parameter(Replica.COORDINATE):
+        if force or not self.parameter(Replica.COORDINATE):
             # save this value to the replicas.db
             self.parameters[Replica.COORDINATE] = self.ensemble.reaction.coordinate(self.universe())
         return self.parameter(Replica.COORDINATE)
