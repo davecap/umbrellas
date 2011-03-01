@@ -106,7 +106,7 @@ class Replica:
     def export(self):
         """ Export all parameters including name. """
         params = self.parameters.copy()
-        params.update({'name':name})
+        params.update({'name':self.name})
         return params
     
     def topology(self):
