@@ -10,7 +10,7 @@ _handler.setFormatter(_formatter)
 logger.addHandler(_handler)
 
 from config import setup_config, setup_replicadb
-from reaction import *
+from reaction import Distance
 
 class Ensemble:
     """ The Ensemble class contains and manages Replicas """
@@ -58,6 +58,14 @@ class Ensemble:
         except KeyError:
             # TODO: subclassed exceptions
             raise Exception('Replica with name %s not found!' % name)
+    
+    def export_replicas(self):
+        replicas = []
+        for name, replica in self.replicas.items():
+            r_dict = replica.parameters.copy()
+            r_dict.update({'name':name})
+            replicas.append(r_dict)
+        return replicas
     
     def load(self):
         """ Load the replica DB from the file. Overwrites the current state. """
