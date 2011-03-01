@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<html> 
+	<head> 
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+		<title>Umbrellas | {{ config.title }}</title> 
+		
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js"></script> 
+		<script type="text/javascript" src="{{ url_for('static', filename='js/highcharts/highcharts.js') }}"></script>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/highcharts/exporting.js') }}"></script> 
+		<script type="text/javascript" src="{{ url_for('static', filename='js/underscore-min.js') }}"></script> 
+		<script type="text/javascript" src="{{ url_for('static', filename='js/backbone-min.js') }}"></script>
+ 		
+    	<script type="text/javascript" src="{{ url_for('static', filename='js/umbrellas.js') }}"></script>
+    	
+        <script type="text/javascript">
+            $(function(){
+                Replicas.refresh({{ replicas|tojson|safe }});
+            });
+        </script>
+        
+        <style>
+            body            { font-family: sans-serif; background: #eee; }
+            a, h1, h2       { color: #377BA8; }
+            h1, h2          { font-family: 'Georgia', serif; margin: 0; }
+            h1              { border-bottom: 2px solid #eee; }
+            h2              { font-size: 1.2em; }
+            .error          { background: #F0D6D6; padding: 0.5em; }
+        </style>
+		
+	</head>
+	
+	<body>
+	    <h1>{{ config.title }}</h1>
+	    
+	    <br />
+	    
+		<div id="umbrellas-app">
+            <div class="title"> 
+                <h1>Replicas</h1> 
+            </div>
+            
+            <div class="content"> 
+            
+                <div id="add-replica"> 
+                  <input id="new-replica-name" placeholder="" type="text" />
+                  <button class="save">Create</button>
+                </div>
+                
+                <div id="replicas">
+                    <ul id="replica-list"></ul>
+                </div>
+                        		
+            </div>
+        </div>
+        
+        <div id="container" style="width: 800px; height: 400px; margin: 0 auto"></div> 
+
+        <!-- Templates --> 
+
+         <script type="text/template" id="replica-template">
+             <div class="replica">
+                <div class="display">
+                    <div class="replica-name"><%= name %></div>
+                    <button class="duplicate">Duplicate</button>
+                </div>
+             </div>
+         </script> 
+        
+		<!-- Chart -->
+		
+		<script type="text/javascript">
+ 			var chart;
+ 			$(document).ready(function() {
+ 				chart = new Highcharts.Chart({
+ 					chart: {
+ 						renderTo: 'container',
+ 						defaultSeriesType: 'spline',
+ 						marginRight: 10,
+ 						events: {
+ 							load: function() {
+
+ 								// set up the updating of the chart each second
+ 								var series = this.series[0];
+ 								setInterval(function() {
+ 									var x = (new Date()).getTime(), // current time
+ 										y = Math.random();
+ 									series.addPoint([x, y], true, true);
+ 								}, 800);
+ 							}
+ 						}
+ 					},
+ 					title: {
+ 						text: 'Real-Time Analysis'
+ 					},
+ 					xAxis: {
+ 						type: 'datetime',
+ 						tickPixelInterval: 150
+ 					},
+ 					yAxis: {
+ 						title: {
+ 							text: 'Value'
+ 						},
+ 						plotLines: [{
+ 							value: 0,
+ 							width: 1,
+ 							color: '#808080'
+ 						}]
+ 					},
+ 					tooltip: {
+ 						formatter: function() {
+ 				                return '<b>'+ this.series.name +'</b><br/>'+
+ 								Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) +'<br/>'+ 
+ 								Highcharts.numberFormat(this.y, 2);
+ 						}
+ 					},
+ 					legend: {
+ 						enabled: false
+ 					},
+ 					exporting: {
+ 						enabled: false
+ 					},
+ 					series: [{
+ 						name: 'Random data',
+ 						data: (function() {
+ 							// generate an array of random data
+ 							var data = [],
+ 								time = (new Date()).getTime(),
+ 								i;
+ 							for (i = -19; i <= 0; i++) {
+ 								data.push({
+ 									x: time + i * 1000,
+ 									y: Math.random()
+ 								});
+ 							}
+ 							return data;
+ 						})()
+ 					}]
+ 				});
+
+
+ 			});
+ 		</script>
+ 		
+	</body>
+</html>
