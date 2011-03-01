@@ -58,14 +58,10 @@ class Ensemble:
         except KeyError:
             # TODO: subclassed exceptions
             raise Exception('Replica with name %s not found!' % name)
-    
-    def export_replicas(self):
-        replicas = []
-        for name, replica in self.replicas.items():
-            r_dict = replica.parameters.copy()
-            r_dict.update({'name':name})
-            replicas.append(r_dict)
-        return replicas
+            
+    def get_replicas(self):
+        """ Get all replicas as an array """
+        return self.replicas.values()
     
     def load(self):
         """ Load the replica DB from the file. Overwrites the current state. """
@@ -106,7 +102,13 @@ class Replica:
         if not self.parameter(Replica.COORDINATE):
             logging.warning('No coordinate for replica %s, calculating now...' % self.name)
             self.coordinate()
-        
+    
+    def export(self):
+        """ Export all parameters including name. """
+        params = self.parameters.copy()
+        params.update({'name':name})
+        return params
+    
     def topology(self):
         """ OPTIONAL Path to the topology file (PSF). """
         return self.parameter(Replica.TOPOLOGY_PATH)
