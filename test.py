@@ -63,6 +63,19 @@ def test_reload_ensemble_replicas(tmpdir):
     assert e1.get_replica('test0')
     assert e1.get_replica('test1')
 
+def test_replica_export(tmpdir):
+    cpath = tmpdir.join('config.ini')
+    rpath = tmpdir.join('replicas.db')
+    cpath.write(TEST_CONFIG)
+
+    e = umbrellas.Ensemble(config_path=str(cpath))
+    e.add_replica(name='test0', coordinates=PDB_small, force=0.0)
+    expected_export = {'coordinate': 27.04374297613483, 'coordinates': PDB_small, 'force': 0.0, 'name': 'test0'}
+    assert e.get_replica('test0').export() == expected_export
+    
+    assert [ r.export() for r in e.get_replicas() ] == [expected_export]
+    
+
 def test_add_replica_to_db(tmpdir):
     cpath = tmpdir.join('config.ini')
     rpath = tmpdir.join('replicas.db')
