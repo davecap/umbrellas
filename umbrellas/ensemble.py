@@ -14,7 +14,7 @@ from reaction import *
 
 class Ensemble:
     """ The Ensemble class contains and manages Replicas """
-     
+    
     def __init__(self, config_path='config.ini'):
         # Load the config file
         if not os.path.exists(config_path):
@@ -35,73 +35,81 @@ class Ensemble:
         # TODO: improve this!
         self.reaction = globals()[self.config['reaction']['type']](self.config)
     
-    def _basedir(self):
+    def _replicadb_path(self):
+        return os.path.join(self.basedir(), self.config['replicadb'])
+    
+    def basedir(self):
+        """ Returns the directory containing the current config file. """
         return os.path.dirname(self.config.filename)
     
-    def _replicadb_path(self):
-        return os.path.join(self._basedir(), self.config['replicadb'])
-        
     def add_replica(self, name, **kwargs):
+        """ Add a new replica (name must be unique) with the kwargs as parameters. """
         if name in self.replicas:
             raise Exception('Cannot create replica with name %s, already taken!' % name)
-        r = Replica(self, name, **kwargs)
-        self.replicas[name] = r
-        return r
+        new_replica = Replica(self, name, **kwargs)
+        self.replicas[name] = new_replica
+        # TODO: autosave?
+        return new_replica
         
     def get_replica(self, name):
-        if name in self.replicas:
+        """ Get a replica by name, raises exception if not found. """
+        try:
             return self.replicas[name]
-        else:
+        except KeyError:
+            # TODO: subclassed exceptions
             raise Exception('Replica with name %s not found!' % name)
     
     def load(self):
-        """ Load the replica DB """
+        """ Load the replica DB from the file. Overwrites the current state. """
         self.replicas = {}
         for name in self.replicadb['replicas']:
             self.replicas[name] = Replica(self, name, **self.replicadb['replicas'][name])
                 
     def save(self):
-        """ Save the replica DB """
+        """ Save the replica DB. """
         for name,r in self.replicas.items():
             self.replicadb['replicas'][name] = r.parameters
         self.replicadb.write()
+        self.config.write()
 
 class Replica:
-    """ The Replica class defines a single replica in a system.
-    """
-    STRUCTURE_PATH_KEY = 'structure'
-    COORDINATES_PATH_KEY = 'coordinates'
-    COORDINATE_KEY = 'coordinate'
-    FORCE_KEY = 'force'
+    """ The Replica class defines a single replica in a system. """
     
-    DEFAULTS = { FORCE_KEY: 0.0, COORDINATES_PATH_KEY: '' }
+    # reserved parameters
+    # TODO: should the topology file be shared from the Ensemble?
+    TOPOLOGY_PATH = 'topology' # topology file path
+    # TODO: are these too similar? should one be renamed?
+    COORDINATES_PATH = 'coordinates' # coordinates file path
+    COORDINATE = 'coordinate' # reaction coordinate
+    FORCE = 'force'
+    
+    DEFAULTS = { FORCE: 0.0, COORDINATES_PATH: '' }
     
     def __init__(self, ensemble, name, **kwargs):
         self.ensemble = ensemble # Ensemble object reference
         self.name = name # name of this Replica
         self._universe = None # local MDAnalysis Universe object, see self.universe()
         self.parameters = Replica.DEFAULTS.copy() # copy a set of defaults first
+        self.parameters.update(kwargs) # update the defaults with the passed kwargs
         
-        self.parameters.update(kwargs)
-        
-        if not self.parameter(Replica.COORDINATES_PATH_KEY):
+        if not self.parameter(Replica.COORDINATES_PATH):
             raise Exception('No coordinate path for replica %s' % self.name)
             
-        if not self.parameter(Replica.COORDINATE_KEY):
+        if not self.parameter(Replica.COORDINATE):
             logging.warning('No coordinate for replica %s, calculating now...' % self.name)
             self.coordinate()
         
-    def structure(self):
-        """ OPTIONAL Path to the structure file (PSF). """
-        return self.parameter(Replica.STRUCTURE_PATH_KEY)
+    def topology(self):
+        """ OPTIONAL Path to the topology file (PSF). """
+        return self.parameter(Replica.TOPOLOGY_PATH)
         
     def coordinates(self):
         """ REQUIRED Path to the coordinates file (PDB, DCD, CRD). """
-        return self.parameter(Replica.COORDINATES_PATH_KEY)
+        return self.parameter(Replica.COORDINATES_PATH)
     
-    def u_structure(self):
+    def u_topology(self):
         """ Structure/Topology file from the MDAnalysis Universe perspective """
-        if not self._universe or not self.structure():
+        if not self._universe or not self.topology():
             return None
         else:
             return self._universe.filename
@@ -110,7 +118,7 @@ class Replica:
         """ Coordinate file from the MDAnalysis Universe perspective """
         if not self._universe:
             return None
-        if self.structure():
+        if self.topology():
             return self._universe.trajectory.filename
         else:
             return self._universe.filename
@@ -125,18 +133,18 @@ class Replica:
     def universe(self):
         """ Generate/Return a MDanalysis Universe object"""
         # check to make sure we haven't already loaded the universe
-        if self._universe and self.u_structure() == self.structure() and self.u_coordinates() == self.coordinates():
+        if self._universe and self.u_topology() == self.topology() and self.u_coordinates() == self.coordinates():
             return self._universe
         
         if self.coordinates() is None or not os.path.exists(self.coordinates()):
             raise Exception('Coordinates path for replica %s not found: %s' % (self.name, self.coordinates()))
         
-        if self.structure() and not os.path.exists(self.structure()):
-            raise Exception('Structure file for replica %s not found: %s' % (self.name, self.structure()))
+        if self.topology() and not os.path.exists(self.topology()):
+            raise Exception('Topology file for replica %s not found: %s' % (self.name, self.topology()))
         
-        if self.structure() and self.coordinates():
-            # first see if we have both structure and coordinate files
-            self._universe = MDAnalysis.Universe(self.structure(), self.coordinates())
+        if self.topology() and self.coordinates():
+            # first see if we have both topology and coordinate files
+            self._universe = MDAnalysis.Universe(self.topology(), self.coordinates())
         else:
             # fallback to coordinate only
             self._universe = MDAnalysis.Universe(self.coordinates())
@@ -166,14 +174,14 @@ class Replica:
         w.write(self.universe())
         
         # set the new file as this coordinates file
-        self.parameters[Replica.COORDINATES_PATH_KEY] = path
+        self.parameters[Replica.COORDINATES_PATH] = path
      
     def coordinate(self):
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""
-        if not self.parameter(Replica.COORDINATE_KEY):
+        if not self.parameter(Replica.COORDINATE):
             # save this value to the replicas.db
-            self.parameters[Replica.COORDINATE_KEY] = self.ensemble.reaction.coordinate(self.universe())
-        return self.parameter(Replica.COORDINATE_KEY)
+            self.parameters[Replica.COORDINATE] = self.ensemble.reaction.coordinate(self.universe())
+        return self.parameter(Replica.COORDINATE)
     
     def mutate(self, step=1.0):
         """ Mutate this replica's coordinate by step units.
@@ -181,4 +189,4 @@ class Replica:
         """
         self.ensemble.reaction.mutate(self.universe(), step)
         # reset the coordinate after a mutation
-        self.parameters[Replica.COORDINATE_KEY] = None
+        self.parameters[Replica.COORDINATE] = None

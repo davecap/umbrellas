@@ -124,9 +124,9 @@ def test_replica_coordinates_load(tmpdir):
     assert str(r_u) == str(u)
     assert u.filename == r.u_coordinates()
     assert PDB_small == r.u_coordinates()
-    assert r.u_structure() == None
+    assert r.u_topology() == None
 
-def test_replica_coordinates_structure_load(tmpdir):
+def test_replica_coordinates_topology_load(tmpdir):
     cpath = tmpdir.join('config.ini')
     rpath = tmpdir.join('replicas.db')
     cpath.write(TEST_CONFIG)
@@ -135,7 +135,7 @@ def test_replica_coordinates_structure_load(tmpdir):
 
     u = MDAnalysis.Universe(PSF,DCD)
 
-    e.add_replica(name='trl0', coordinates=DCD, structure=PSF)
+    e.add_replica(name='trl0', coordinates=DCD, topology=PSF)
     e.save()
     
     r = e.get_replica('trl0')
@@ -143,8 +143,8 @@ def test_replica_coordinates_structure_load(tmpdir):
     assert str(r_u) == str(u)
     assert u.trajectory.filename == r.u_coordinates()
     assert DCD == r.u_coordinates()
-    assert u.filename == r.u_structure()
-    assert PSF == r.u_structure()
+    assert u.filename == r.u_topology()
+    assert PSF == r.u_topology()
     assert r_u == r.universe()
 
 def test_replica_coordinate_xyz(tmpdir):
