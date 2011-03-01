@@ -130,10 +130,10 @@ class Replica:
         else:
             return None
         
-    def universe(self):
+    def universe(self, force=False):
         """ Generate/Return a MDanalysis Universe object"""
         # check to make sure we haven't already loaded the universe
-        if self._universe and self.u_topology() == self.topology() and self.u_coordinates() == self.coordinates():
+        if not force and self._universe and self.u_topology() == self.topology() and self.u_coordinates() == self.coordinates():
             return self._universe
         
         if self.coordinates() is None or not os.path.exists(self.coordinates()):
@@ -180,7 +180,7 @@ class Replica:
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""
         if force or not self.parameter(Replica.COORDINATE):
             # save this value to the replicas.db
-            self.parameters[Replica.COORDINATE] = self.ensemble.reaction.coordinate(self.universe())
+            self.parameters[Replica.COORDINATE] = self.ensemble.reaction.coordinate(self.universe(force))
         return self.parameter(Replica.COORDINATE)
     
     def mutate(self, step=1.0):
