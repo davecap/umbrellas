@@ -171,10 +171,10 @@ class Replica:
         
         # write to a new file in the same dir as path, dont overwrite path
         if os.path.exists(path) and not overwrite:
-            basename, ext = os.path.splitext(path)
             # get time in seconds as a string
             t = str(time.time()).split('.')[0]
-            path = os.path.join(os.path.dirname(path), basename+'_'+t+ext)
+            base, ext = os.path.splitext(path)
+            path = base+'_'+t+ext
             if os.path.exists(path):
                 # this shouldn't really ever happen...
                 # TODO: figure out how to generate a filename that doesn't exist
@@ -191,7 +191,7 @@ class Replica:
         """ Return the coordinate for this replica, calculated automatically from the coordinates"""
         if force or not self.parameter(Replica.COORDINATE):
             # save this value to the replicas.db
-            self.parameters[Replica.COORDINATE] = self.ensemble.reaction.coordinate(self.universe(force))
+            self.parameters[Replica.COORDINATE] = self.ensemble.reaction.coordinate(self.universe())
         return self.parameter(Replica.COORDINATE)
     
     def mutate(self, step=1.0):
@@ -199,5 +199,4 @@ class Replica:
             The proper step size depends on the current reaction type in use.
         """
         self.ensemble.reaction.mutate(self.universe(), step)
-        # reset the coordinate after a mutation
-        self.parameters[Replica.COORDINATE] = None
+        self.coordinate(force=True)
