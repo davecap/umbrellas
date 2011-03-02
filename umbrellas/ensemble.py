@@ -28,19 +28,13 @@ class Ensemble:
             logger.setLevel(logging.WARNING)
             
         # Load the replica DB file (path from config)
-        self.replicadb = setup_replicadb(self._replicadb_path(), create=True)
+        replicadb_path = os.path.join(os.path.dirname(self.config.filename), self.config['replicadb'])
+        self.replicadb = setup_replicadb(replicadb_path, create=True)
         self.load()
         
         # Instantiate the Reaction class and validate it against the config
         # TODO: improve this!
         self.reaction = globals()[self.config['reaction']['type']](self.config)
-    
-    def _replicadb_path(self):
-        return os.path.join(self.basedir(), self.config['replicadb'])
-    
-    def basedir(self):
-        """ Returns the directory containing the current config file. """
-        return os.path.dirname(self.config.filename)
     
     def add_replica(self, name, **kwargs):
         """ Add a new replica (name must be unique) with the kwargs as parameters. """
@@ -48,9 +42,18 @@ class Ensemble:
             raise Exception('Cannot create replica with name %s, already taken!' % name)
         new_replica = Replica(self, name, **kwargs)
         self.replicas[name] = new_replica
-        # TODO: autosave?
         return new_replica
-        
+    
+    def copy_replica(self, name):
+        """ Copy a given replica by name """
+        old_replica = self.get_replica(name)
+        names = self.replicas.keys()
+        # generate a new name
+        i=0
+        while (name+str(i)) in names:
+            i+=1
+        return self.add_replica(name=name+str(i), **old_replica.parameters)
+    
     def get_replica(self, name):
         """ Get a replica by name, raises exception if not found. """
         try:
