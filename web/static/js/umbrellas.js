@@ -57,6 +57,8 @@ $(function(){
         
         edit: function() {
             alert('editing '+this.model.id+' '+this.model.get("value"));
+            var newvalue = prompt("Please enter a new value for "+this.model.id, this.model.get("value"));
+            this.model.set({value: newvalue});
         },
         
     });
