@@ -19,6 +19,13 @@
             h1              { border-bottom: 2px solid #eee; }
             h2              { font-size: 1.2em; }
             .error          { background: #F0D6D6; padding: 0.5em; }
+            .parameter-list .editing .display,
+            .parameter-list .edit {
+              display: none;
+            }
+            .parameter-list .editing .edit {
+                display: block;
+             }
         </style>
 		
 	</head>
@@ -56,8 +63,16 @@
              <div class="parameter" ><%= name %>: <%= value %></div>
          <% }); %> -->
          
-         <script type="text/template" id="parameter-template"> 
-            <span class="name"><%= id %></span>: <span class="value"><%= value %></span>
+         <script type="text/template" id="parameter-template">
+            <span class="display">
+                <span class="name"><%= id %></span>: <span class="value"><%= value %></span>
+                <a href="#" class="edit-button">Edit</a>
+            </span>
+            <span class="edit">
+                <%= id %>: <input class="value-input" type="text" value="<%= value %>" />
+                <a href="#" class="save-button">Save</a>
+                <a href="#" class="cancel-button">Cancel</a>
+            </span>
          </script>
         
 		<!-- Chart -->

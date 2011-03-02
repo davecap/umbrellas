@@ -36,8 +36,11 @@ def index():
     replicas = [ r.export() for r in g.ensemble.get_replicas() ]
     return render_template('index.html', config=g.ensemble.config, replicas=replicas)
 
-@app.route('/replicas/<name>', methods=['GET','POST'])
+@app.route('/replicas/<name>', methods=['GET','PUT'])
 def replicas(name):
+    if not request.is_xhr:
+        abort(500)
+    
     if request.method == 'POST':
         print request.form
         return jsonify(replica={})
@@ -45,14 +48,21 @@ def replicas(name):
         # GET
         return jsonify(g.ensemble.get_replica(name).export())
         
-@app.route('/replicas/<name>/parameters', methods=['GET','POST'])
-def replica_parameters(name):
-    if request.method == 'POST':
-        print request.form
+@app.route('/replicas/<name>/parameters/<pname>', methods=['GET','PUT'])
+def replica_parameters(name,pname=None):
+    if not request.is_xhr:
+        abort(500)
+        
+    if request.method == 'PUT':
+        print str(request.form)
         return jsonify(replica={})
     else:
         # GET
-        return jsonify(g.ensemble.get_replica(name).export()['parameters'])
+        if pname:
+            return jsonify(g.ensemble.get_replica(name).export()['parameters'][pname])
+        else:
+            return jsonify(g.ensemble.get_replica(name).export()['parameters'])
+
 
 if __name__ == "__main__":
     main()

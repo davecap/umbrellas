@@ -41,24 +41,43 @@ $(function(){
         template: _.template($('#parameter-template').html()),
         
         events: {
-            "dblclick": "edit",
+            "click .edit-button": "edit",
+            "click .save-button": "save",
+            "click .cancel-button": "close",
         },
         
         initialize: function() {
-            _.bindAll(this, 'render', 'edit');
+            _.bindAll(this, 'render', 'edit', 'save', 'close');
             this.model.bind('change', this.render);
             this.model.view = this;
         },
         
+        edit: function() {
+            $(this.el).addClass("editing");
+            this.input.focus();
+        },
+        
+        save: function() {
+            this.model.save({value: this.input.val()});
+            this.close();
+        },
+        
+        close: function() {
+            this.setContent();
+            $(this.el).removeClass("editing");
+        },
+        
         render: function() {
             $(this.el).html(this.template(this.model.toJSON()));
+            this.setContent();
             return this;
         },
         
-        edit: function() {
-            alert('editing '+this.model.id+' '+this.model.get("value"));
-            var newvalue = prompt("Please enter a new value for "+this.model.id, this.model.get("value"));
-            this.model.set({value: newvalue});
+        setContent: function() {
+            var content = this.model.get('value');
+            this.$('.value').text(content);
+            this.input = this.$('.value-input');
+            this.input.val(content);
         },
         
     });
@@ -84,7 +103,7 @@ $(function(){
             $(this.el).html(this.template(this.model.toJSON()));
             // add the parameter sub-templates into this one
             var self = this;
-            _.each(this.model.parameters.models, function(p) { self.$('.parameter-list').append(new ParameterView({model: p}).render().el); });
+            _.each(self.model.parameters.models, function(p) { self.$('.parameter-list').append(new ParameterView({model: p}).render().el); });
             return this;
         },
         
