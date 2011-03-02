@@ -1,23 +1,27 @@
 $(function(){
+    
+    window.Parameter = Backbone.Model.extend({ });
+    
+    window.ParameterSet = Backbone.Collection.extend({
+        model: Parameter,
+    });
 
     // Replica model
     window.Replica = Backbone.Model.extend({
-        defaults: {
-            "name":  "new_replica",
-            "parameters": { coordinate: "", coordinates: "", force: "" },
+        initialize: function(data) {
+            this.set({id: data.name});
+            this.parameters = new ParameterSet;
+            this.parameters.url = '/replicas/' + this.id + '/parameters';
+            // create all of the Parameter objects
+            this.parameters.add(_.map(data.parameters, function(value, key){ return {id:key, value:value} }));
         },
         
-        addParameter: function(k,v) {
-            this.parameters[k] = v;
+        getSeries: function() {
+            if (this.parameters.get("coordinate")) {
+                return { name: this.id, data: [[this.parameters.get("coordinate").get("value"), 0.0]] };          
+            }
+            return false;
         },
-        
-        removeParameter: function(k) {
-        },
-        
-        getParameter: function(k) {
-            return this.parameters[k]
-        },
-        
     });
 
     // ReplicaSet
@@ -30,7 +34,8 @@ $(function(){
     
     // Replica view
     window.ReplicaView = Backbone.View.extend({
-        tagName: "li",
+        tagName: "div",
+        className: "replica",
         template: _.template($('#replica-template').html()),
         
         events: {
@@ -40,7 +45,7 @@ $(function(){
             _.bindAll(this, 'render');
             // Bind the view to the model (one-to-one)
             this.model.bind('change', this.render);
-            this.model.view = this;
+            this.model.view = this;              
         },
         
         // Render the contents of a single replica.
@@ -68,14 +73,17 @@ $(function(){
         },
 
         render: function() {
-            //this.$('#ensemble-stats').html(this.chartTemplate({ }));
         },
-
+        
         // Add a single replica to the list by creating a view for it, and
         // appending its element to the `<ul>`.
         addOne: function(replica) {
             var view = new ReplicaView({model: replica});
             this.$("#replica-list").append(view.render().el);
+            series = replica.getSeries()
+            if (series) {
+                this.chart.addSeries(series);
+            }
         },
         
         addAll: function() {

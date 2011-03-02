@@ -36,7 +36,6 @@ def index():
     replicas = [ r.export() for r in g.ensemble.get_replicas() ]
     return render_template('index.html', config=g.ensemble.config, replicas=replicas)
 
-# @app.route('/replicas', methods=['GET','POST'])
 @app.route('/replicas/<name>', methods=['GET','POST'])
 def replicas(name):
     if request.method == 'POST':
@@ -45,6 +44,15 @@ def replicas(name):
     else:
         # GET
         return jsonify(g.ensemble.get_replica(name).export())
+        
+@app.route('/replicas/<name>/parameters', methods=['GET','POST'])
+def replica_parameters(name):
+    if request.method == 'POST':
+        print request.form
+        return jsonify(replica={})
+    else:
+        # GET
+        return jsonify(g.ensemble.get_replica(name).export()['parameters'])
 
 if __name__ == "__main__":
     main()

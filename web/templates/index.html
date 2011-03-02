@@ -11,12 +11,6 @@
 		<script type="text/javascript" src="{{ url_for('static', filename='js/backbone-min.js') }}"></script>
  		
     	<script type="text/javascript" src="{{ url_for('static', filename='js/umbrellas.js') }}"></script>
-    	
-        <script type="text/javascript">
-            $(function(){
-                Replicas.refresh({{ replicas|tojson|safe }});
-            });
-        </script>
         
         <style>
             body            { font-family: sans-serif; background: #eee; }
@@ -40,11 +34,6 @@
             </div>
             
             <div class="content"> 
-            
-                <div id="add-replica"> 
-                  <input id="new-replica-name" placeholder="" type="text" />
-                  <button class="save">Create</button>
-                </div>
                 
                 <div id="replicas">
                     <ul id="replica-list"></ul>
@@ -58,12 +47,11 @@
         <!-- Templates --> 
 
          <script type="text/template" id="replica-template">
-             <div class="replica">
-                <div class="display">
-                    <div class="replica-name"><%= name %></div>
-                    <button class="duplicate">Duplicate</button>
-                </div>
-             </div>
+            <div class="name" style="font-weight:bold;"><%= id %></div>
+            <% _.each(parameters, function(value,name) { %> 
+                <div class="parameter" ><%= name %>: <%= value %></div>
+            <% }); %>
+            <br />
          </script> 
         
 		<!-- Chart -->
@@ -76,29 +64,18 @@
  						renderTo: 'container',
  						defaultSeriesType: 'spline',
  						marginRight: 10,
- 						events: {
- 							load: function() {
-
- 								// set up the updating of the chart each second
- 								var series = this.series[0];
- 								setInterval(function() {
- 									var x = (new Date()).getTime(), // current time
- 										y = Math.random();
- 									series.addPoint([x, y], true, true);
- 								}, 800);
- 							}
- 						}
  					},
  					title: {
- 						text: 'Real-Time Analysis'
+ 						text: 'Umbrellas'
  					},
  					xAxis: {
- 						type: 'datetime',
- 						tickPixelInterval: 150
+ 					    title: {
+ 					        text: 'Reaction Coordinate'
+				        },
  					},
  					yAxis: {
  						title: {
- 							text: 'Value'
+ 							text: 'Potential'
  						},
  						plotLines: [{
  							value: 0,
@@ -107,37 +84,17 @@
  						}]
  					},
  					tooltip: {
- 						formatter: function() {
- 				                return '<b>'+ this.series.name +'</b><br/>'+
- 								Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) +'<br/>'+ 
- 								Highcharts.numberFormat(this.y, 2);
- 						}
  					},
  					legend: {
- 						enabled: false
+ 						enabled: true
  					},
  					exporting: {
- 						enabled: false
+ 						enabled: true
  					},
- 					series: [{
- 						name: 'Random data',
- 						data: (function() {
- 							// generate an array of random data
- 							var data = [],
- 								time = (new Date()).getTime(),
- 								i;
- 							for (i = -19; i <= 0; i++) {
- 								data.push({
- 									x: time + i * 1000,
- 									y: Math.random()
- 								});
- 							}
- 							return data;
- 						})()
- 					}]
  				});
-
-
+ 				
+ 				App.chart = chart;
+                Replicas.refresh({{ replicas|tojson|safe }});
  			});
  		</script>
  		
