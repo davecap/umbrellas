@@ -1,7 +1,9 @@
 $(function(){
     
+    // a Parameter is just an id and a value
     window.Parameter = Backbone.Model.extend({ });
     
+    // Each replica contains a ParameterSet
     window.ParameterSet = Backbone.Collection.extend({
         model: Parameter,
     });
@@ -13,7 +15,7 @@ $(function(){
             this.parameters = new ParameterSet;
             this.parameters.url = '/replicas/' + this.id + '/parameters';
             // create all of the Parameter objects
-            this.parameters.add(_.map(data.parameters, function(value, key){ return {id:key, value:value} }));
+            this.parameters.add(_.map(data.parameters, function(value, id){ return {id:id, value:value} }));
         },
         
         getSeries: function() {
@@ -31,6 +33,33 @@ $(function(){
     });
 
     window.Replicas = new ReplicaSet;
+    
+    // Parameter view
+    window.ParameterView = Backbone.View.extend({
+        tagName: "div",
+        className: "parameter",
+        template: _.template($('#parameter-template').html()),
+        
+        events: {
+            "dblclick": "edit",
+        },
+        
+        initialize: function() {
+            _.bindAll(this, 'render', 'edit');
+            this.model.bind('change', this.render);
+            this.model.view = this;
+        },
+        
+        render: function() {
+            $(this.el).html(this.template(this.model.toJSON()));
+            return this;
+        },
+        
+        edit: function() {
+            alert('editing '+this.model.id+' '+this.model.get("value"));
+        },
+        
+    });
     
     // Replica view
     window.ReplicaView = Backbone.View.extend({
@@ -51,6 +80,9 @@ $(function(){
         // Render the contents of a single replica.
         render: function() {
             $(this.el).html(this.template(this.model.toJSON()));
+            // add the parameter sub-templates into this one
+            var self = this;
+            _.each(this.model.parameters.models, function(p) { self.$('.parameter-list').append(new ParameterView({model: p}).render().el); });
             return this;
         },
         

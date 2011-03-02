@@ -36,7 +36,7 @@
             <div class="content"> 
                 
                 <div id="replicas">
-                    <ul id="replica-list"></ul>
+                    <div id="replica-list"></div>
                 </div>
                         		
             </div>
@@ -48,11 +48,17 @@
 
          <script type="text/template" id="replica-template">
             <div class="name" style="font-weight:bold;"><%= id %></div>
-            <% _.each(parameters, function(value,name) { %> 
-                <div class="parameter" ><%= name %>: <%= value %></div>
-            <% }); %>
+            <div class="parameter-list"></div>
             <br />
-         </script> 
+         </script>
+         
+         <!-- <% _.each(parameters, function(value,name) { %> 
+             <div class="parameter" ><%= name %>: <%= value %></div>
+         <% }); %> -->
+         
+         <script type="text/template" id="parameter-template"> 
+            <span class="name"><%= id %></span>: <span class="value"><%= value %></span>
+         </script>
         
 		<!-- Chart -->
 		
