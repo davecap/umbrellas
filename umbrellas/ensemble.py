@@ -35,6 +35,9 @@ class Ensemble:
         # Instantiate the Reaction class and validate it against the config
         # TODO: improve this!
         self.reaction = globals()[self.config['reaction']['type']](self.config)
+
+    def basedir(self):
+        return os.path.dirname(os.path.abspath(self.config.filename))
     
     def add_replica(self, name, **kwargs):
         """ Add a new replica (name must be unique) with the kwargs as parameters. """
